@@ -700,6 +700,20 @@
 </div>
 
 <script>
+  // Visible diagnostic if anything blows up before the app can render an error
+  window.addEventListener('error', function(e) {
+    const loading = document.getElementById('loading');
+    if (loading && loading.style.display !== 'none') {
+      loading.innerHTML = '<div style="max-width:500px;padding:24px;background:#fff;border:2px solid #000;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;text-align:left"><strong>JavaScript error:</strong><br>' + (e.message || 'Unknown') + '<br><br><strong>File:</strong> ' + (e.filename || 'inline') + '<br><strong>Line:</strong> ' + (e.lineno || '?') + '</div>';
+    }
+  });
+
+  // Check Supabase loaded
+  if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+    document.getElementById('loading').innerHTML = '<div style="max-width:500px;padding:24px;background:#fff;border:2px solid #000;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;text-align:left"><strong>Supabase library did not load.</strong><br><br>The CDN script (cdn.jsdelivr.net) may be blocked by your network, browser extension, or ad blocker. Try a different browser or disable extensions on this page.</div>';
+    throw new Error('Supabase library not loaded');
+  }
+
   const SUPABASE_URL = 'https://rguqefwhlzehpzgljbdo.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndXFlZndobHplaHB6Z2xqYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzYyMjYsImV4cCI6MjA4OTk1MjIyNn0.N8-BWjyTFMpdoTbKBik8jQdyA7YCPiq7nT_HdfxcMZ8';
 
