@@ -744,10 +744,12 @@
     <h1>Sell Your <span class="accent">Sh!t</span></h1>
     <p class="lead">Sales activities, gamified. A bingo card for you and your partner-in-crime.</p>
     <div class="auth-form">
-      <label class="field-label" for="email-input">Your Email</label>
+      <label class="field-label" for="email-input">Email</label>
       <input type="email" id="email-input" class="field-input" placeholder="you@yourdomain.com" autocomplete="email" />
-      <button id="send-link-btn" class="btn btn-primary" style="margin-top: 16px; width: 100%;">Send Magic Link</button>
-      <p class="auth-note">A sign-in link will land in your inbox. Access restricted to Whitney, Orly, and the admin.</p>
+      <label class="field-label" for="password-input" style="margin-top: 16px;">Password</label>
+      <input type="password" id="password-input" class="field-input" placeholder="••••••••" autocomplete="current-password" />
+      <button id="signin-btn" class="btn btn-primary" style="margin-top: 16px; width: 100%;">Sign In</button>
+      <p class="auth-note">Access restricted to Whitney, Orly, and the admin. <a href="#" id="forgot-link" style="color:inherit;text-decoration:underline">Forgot password?</a></p>
       <div id="auth-message"></div>
     </div>
   </div>
@@ -1371,35 +1373,59 @@
     setTimeout(() => el.remove(), 2500);
   }
 
-  $('send-link-btn').addEventListener('click', async () => {
+  async function doSignIn() {
     const email = $('email-input').value.trim().toLowerCase();
+    const password = $('password-input').value;
     const msg = $('auth-message');
     msg.innerHTML = '';
-    if (!email) {
-      msg.innerHTML = `<div class="auth-error">Add your email first.</div>`;
+    if (!email || !password) {
+      msg.innerHTML = `<div class="auth-error">Email and password are both required.</div>`;
       return;
     }
     if (!PLAYERS[email]) {
       msg.innerHTML = `<div class="auth-error">This card is private. Access restricted to Whitney, Orly, and the admin.</div>`;
       return;
     }
-    $('send-link-btn').disabled = true;
-    $('send-link-btn').textContent = 'Sending…';
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.href }
+    $('signin-btn').disabled = true;
+    $('signin-btn').textContent = 'Signing in…';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    $('signin-btn').disabled = false;
+    $('signin-btn').textContent = 'Sign In';
+    if (error) {
+      msg.innerHTML = `<div class="auth-error">${error.message}</div>`;
+    }
+    // onAuthStateChange will handle the redirect if successful
+  }
+
+  $('signin-btn').addEventListener('click', doSignIn);
+  $('password-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSignIn();
+  });
+  $('email-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('password-input').focus();
+  });
+
+  $('forgot-link').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = $('email-input').value.trim().toLowerCase();
+    const msg = $('auth-message');
+    msg.innerHTML = '';
+    if (!email) {
+      msg.innerHTML = `<div class="auth-error">Enter your email above first, then click "Forgot password?" again.</div>`;
+      return;
+    }
+    if (!PLAYERS[email]) {
+      msg.innerHTML = `<div class="auth-error">This card is private. Access restricted to Whitney, Orly, and the admin.</div>`;
+      return;
+    }
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
     });
-    $('send-link-btn').disabled = false;
-    $('send-link-btn').textContent = 'Send Magic Link';
     if (error) {
       msg.innerHTML = `<div class="auth-error">${error.message}</div>`;
     } else {
-      msg.innerHTML = `<div class="auth-success">Check your inbox at <strong>${email}</strong> for a sign-in link. Click it on this device.</div>`;
+      msg.innerHTML = `<div class="auth-success">Password reset link sent to <strong>${email}</strong>. Check your inbox.</div>`;
     }
-  });
-
-  $('email-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('send-link-btn').click();
   });
 
   $('signout-btn').addEventListener('click', async () => {
