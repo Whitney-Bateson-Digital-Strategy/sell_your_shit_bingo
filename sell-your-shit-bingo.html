@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sell Your Sh!t — A Bingo Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #f4ede1;
+    --paper-warm: #ebe0cc;
+    --paper-deep: #ddd0b5;
+    --rust: #c4521d;
+    --rust-deep: #8a3812;
+    --olive: #5a6438;
+    --gold: #d4a017;
+    --shadow: rgba(26, 20, 16, 0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(196, 82, 29, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 85% 75%, rgba(90, 100, 56, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ===== AUTH SCREEN ===== */
+  .auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .auth-card {
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+  }
+  .auth-card .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 16px;
+  }
+  .auth-card h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(48px, 8vw, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    font-variation-settings: "opsz" 144;
+  }
+  .auth-card h1 .accent {
+    color: var(--rust);
+    font-style: italic;
+  }
+  .auth-card .lead {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    opacity: 0.75;
+    margin-bottom: 32px;
+    line-height: 1.4;
+  }
+  .auth-form {
+    background: var(--paper-warm);
+    border: 1px solid rgba(26, 20, 16, 0.1);
+    border-radius: 8px;
+    padding: 32px;
+    text-align: left;
+  }
+  .field-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+  .field-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(26, 20, 16, 0.2);
+    border-radius: 4px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field-input:focus { border-color: var(--rust); }
+  .auth-note {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    opacity: 0.6;
+    margin-top: 14px;
+    line-height: 1.4;
+  }
+  .auth-error {
+    background: rgba(196, 82, 29, 0.1);
+    border: 1px solid var(--rust);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--rust-deep);
+    margin-top: 16px;
+    font-family: 'Fraunces', serif;
+  }
+  .auth-success {
+    background: rgba(90, 100, 56, 0.1);
+    border: 1px solid var(--olive);
+    border-radius: 4px;
+    padding: 16px;
+    font-size: 15px;
+    color: var(--olive);
+    margin-top: 16px;
+    font-family: 'Fraunces', serif;
+    line-height: 1.5;
+  }
+
+  /* ===== APP HEADER ===== */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .top-bar .me { opacity: 0.7; }
+  .top-bar .me strong {
+    color: var(--rust);
+    font-weight: 500;
+  }
+  .signout {
+    background: transparent;
+    border: 1px solid rgba(26, 20, 16, 0.2);
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.2s;
+  }
+  .signout:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .header { text-align: center; margin-bottom: 24px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 12px;
+  }
+  h1.title {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(44px, 7vw, 80px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-variation-settings: "opsz" 144;
+  }
+  h1.title .accent {
+    color: var(--rust);
+    font-style: italic;
+  }
+  .subtitle {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    opacity: 0.7;
+    margin-top: 12px;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ===== VIEW TOGGLE ===== */
+  .view-toggle {
+    display: flex;
+    justify-content: center;
+    margin: 28px auto;
+    background: var(--ink);
+    border-radius: 100px;
+    padding: 4px;
+    width: fit-content;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .view-btn {
+    background: transparent;
+    border: none;
+    padding: 12px 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--paper);
+    cursor: pointer;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+  }
+  .view-btn.active { background: var(--rust); }
+
+  /* ===== STATS ===== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .stat {
+    text-align: center;
+    padding: 18px 12px;
+    background: var(--paper-warm);
+    border: 1px solid rgba(26, 20, 16, 0.1);
+    border-radius: 6px;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1;
+    color: var(--rust);
+    font-variation-settings: "opsz" 144;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+
+  /* ===== BINGO GRID ===== */
+  .board-label {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .board-label strong {
+    font-style: normal;
+    font-weight: 800;
+    color: var(--rust);
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    background: var(--paper-warm);
+    border: 1px solid rgba(26, 20, 16, 0.15);
+    border-radius: 6px;
+    padding: 14px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+  }
+  .cell:hover {
+    background: var(--paper-deep);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--shadow);
+  }
+  .cell-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    opacity: 0.4;
+  }
+  .cell-text {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+  .cell-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .note-indicator { font-size: 12px; opacity: 0.5; }
+  .cell.done {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .cell.done .cell-text { color: var(--paper); }
+  .cell.done .cell-num { color: var(--paper); opacity: 0.5; }
+  .cell.done .note-indicator { color: var(--gold); opacity: 1; }
+  .cell.done::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--rust);
+    background-image:
+      linear-gradient(45deg, transparent 44%, var(--paper) 44%, var(--paper) 56%, transparent 56%),
+      linear-gradient(-45deg, transparent 44%, var(--paper) 44%, var(--paper) 56%, transparent 56%);
+    background-size: 11px 11px;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes pop {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .cell.bingo-line {
+    box-shadow: 0 0 0 3px var(--gold), 0 8px 24px rgba(212, 160, 23, 0.4);
+  }
+  .board.readonly .cell { cursor: default; }
+  .board.readonly .cell:hover {
+    transform: none;
+    background: var(--paper-warm);
+    box-shadow: none;
+  }
+  .board.readonly .cell.done:hover { background: var(--ink); }
+
+  /* ===== MODAL ===== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 20, 16, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--paper);
+    border-radius: 8px;
+    padding: 36px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    line-height: 1;
+  }
+  .modal-close:hover { opacity: 1; }
+  .modal-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 12px;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.3;
+    margin-bottom: 20px;
+  }
+  .modal textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 14px 16px;
+    border: 1px solid rgba(26, 20, 16, 0.2);
+    border-radius: 4px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    line-height: 1.5;
+    background: var(--paper-warm);
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal textarea:focus { border-color: var(--rust); }
+  .modal textarea[readonly] {
+    background: var(--paper-deep);
+    opacity: 0.85;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1;
+    min-width: 130px;
+    padding: 13px 18px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--ink);
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    background: var(--rust);
+    border-color: var(--rust);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--rust-deep);
+    border-color: var(--rust-deep);
+  }
+  .btn-danger:hover {
+    background: var(--rust-deep);
+    color: var(--paper);
+  }
+
+  /* ===== PARTNER PEEK ===== */
+  .partner-peek {
+    margin-top: 40px;
+    padding: 24px;
+    background: var(--paper-warm);
+    border-radius: 8px;
+    border: 1px dashed rgba(26, 20, 16, 0.25);
+  }
+  .partner-peek-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .partner-peek-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+  }
+  .partner-peek-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+  }
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    max-width: 280px;
+  }
+  .mini-cell {
+    aspect-ratio: 1;
+    background: var(--paper);
+    border-radius: 2px;
+    border: 1px solid rgba(26, 20, 16, 0.1);
+  }
+  .mini-cell.done { background: var(--ink); }
+  .mini-cell.bingo-line { background: var(--gold); }
+
+  /* ===== CELEBRATION ===== */
+  .celebration {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .celebration-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 800;
+    font-size: clamp(80px, 14vw, 180px);
+    color: var(--rust);
+    animation: celebrate 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    text-shadow: 0 8px 30px rgba(196, 82, 29, 0.4);
+    font-variation-settings: "opsz" 144;
+  }
+  @keyframes celebrate {
+    0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+    20% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+    75% { transform: scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1.4) rotate(-2deg); opacity: 0; }
+  }
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    animation: confetti-fall 2.5s linear forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== LOADING ===== */
+  .loading {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 2px solid rgba(26, 20, 16, 0.15);
+    border-top-color: var(--rust);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 24px 16px 60px; }
+    .cell { padding: 10px 8px; }
+    .cell-text { font-size: 11px; }
+    .stat-num { font-size: 30px; }
+    .top-bar { flex-direction: column; gap: 12px; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading</div>
+</div>
+
+<div id="auth-screen" class="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div class="eyebrow">A Challenge for Two</div>
+    <h1>Sell Your <span class="accent">Sh!t</span></h1>
+    <p class="lead">Sales activities, gamified. A bingo card for you and your partner-in-crime.</p>
+    <div class="auth-form">
+      <label class="field-label" for="email-input">Your Email</label>
+      <input type="email" id="email-input" class="field-input" placeholder="you@yourdomain.com" autocomplete="email" />
+      <button id="send-link-btn" class="btn btn-primary" style="margin-top: 16px; width: 100%;">Send Magic Link</button>
+      <p class="auth-note">A sign-in link will land in your inbox. Only Whitney and Orly have access to this card.</p>
+      <div id="auth-message"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="wrap" style="display:none">
+  <div class="top-bar">
+    <div class="me">Signed in as <strong id="current-player-name"></strong></div>
+    <button id="signout-btn" class="signout">Sign Out</button>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">A Challenge for Two</div>
+    <h1 class="title">Sell Your <span class="accent">Sh!t</span></h1>
+    <p class="subtitle">Tap each square as you complete it. Add a reflection note. Cheer each other on. Aim for as many bingos as you can — or better yet, blackout.</p>
+  </div>
+
+  <div class="view-toggle">
+    <button class="view-btn active" data-view="mine">My Card</button>
+    <button class="view-btn" data-view="partner">Partner's Card</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="stat-completed">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-bingos">0</div>
+      <div class="stat-label">Bingos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-progress">0%</div>
+      <div class="stat-label">Toward Blackout</div>
+    </div>
+  </div>
+
+  <div class="board-label" id="board-label"></div>
+  <div id="board" class="board"></div>
+
+  <div class="partner-peek">
+    <div class="partner-peek-header">
+      <div class="partner-peek-title">Peek at <span id="partner-name">your partner's</span> progress</div>
+      <div class="partner-peek-stats" id="partner-stats">— —</div>
+    </div>
+    <div class="mini-grid" id="mini-grid"></div>
+  </div>
+</div>
+
+<div id="modal-backdrop" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal-eyebrow" id="modal-eyebrow">Square 01</div>
+    <div class="modal-title" id="modal-title"></div>
+    <label class="field-label" id="modal-note-label">Your reflection — what happened? what'd you learn?</label>
+    <textarea id="modal-note" placeholder="Optional. Add a note for your partner to see — wins, surprises, what you'd do differently…"></textarea>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://rguqefwhlzehpzgljbdo.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndXFlZndobHplaHB6Z2xqYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzYyMjYsImV4cCI6MjA4OTk1MjIyNn0.N8-BWjyTFMpdoTbKBik8jQdyA7YCPiq7nT_HdfxcMZ8';
+
+  const PLAYERS = {
+    'whitney@whitneybateson.com': { name: 'Whitney', partner_email: 'orly@orlywachter.com' },
+    'orly@orlywachter.com':        { name: 'Orly',    partner_email: 'whitney@whitneybateson.com' }
+  };
+
+  const TASKS = [
+    "Message 3 potential leads on LinkedIn — connect, offer value, follow up once",
+    "Email long-term clients to thank them and offer a complimentary 30-min check-in call",
+    "Beta launch a new offer",
+    "Restart conversations with 3 warm leads who haven't converted yet",
+    "DM 5 people who've engaged with your content — start a real conversation",
+    "Reach out to 3 potential referral sources or collaborators",
+    "Attend a networking event and make 2–3 new connections",
+    "Pitch to host a workshop inside someone else's community",
+    "Record and post a short video answering a common client question",
+    "Send voice notes to 3 warm leads",
+    "List your services in a new place (directory, alumni list, gig site, etc.)",
+    "Audit your social profiles — make sure they reflect your current focus and offers",
+    "Send voice notes to 3 more warm leads",
+    "Message 3 more potential leads on LinkedIn",
+    "DM 5 more people who've engaged with your content",
+    "Record and post another short video answering a client question"
+  ];
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;
+  let currentPlayer = null;
+  let myProgress = { completed: [], notes: {} };
+  let partnerProgress = { completed: [], notes: {} };
+  let partnerPlayer = null;
+  let activeView = 'mine';
+  let activeSquare = null;
+  let previousBingoCount = 0;
+
+  const $ = (id) => document.getElementById(id);
+
+  const BINGO_LINES = [
+    [0,1,2,3], [4,5,6,7], [8,9,10,11], [12,13,14,15],
+    [0,4,8,12], [1,5,9,13], [2,6,10,14], [3,7,11,15],
+    [0,5,10,15], [3,6,9,12]
+  ];
+
+  function getCompletedLines(completed) {
+    const set = new Set(completed);
+    return BINGO_LINES.filter(line => line.every(i => set.has(i)));
+  }
+  function getBingoCount(completed) { return getCompletedLines(completed).length; }
+  function getBingoCells(completed) {
+    const cells = new Set();
+    getCompletedLines(completed).forEach(line => line.forEach(i => cells.add(i)));
+    return cells;
+  }
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user) {
+      handleSignedIn(session.user);
+    } else {
+      showAuth();
+    }
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) handleSignedIn(session.user);
+      else if (event === 'SIGNED_OUT') location.reload();
+    });
+  }
+
+  function showAuth() {
+    $('loading').style.display = 'none';
+    $('auth-screen').style.display = 'flex';
+  }
+
+  async function handleSignedIn(user) {
+    const email = user.email.toLowerCase();
+    if (!PLAYERS[email]) {
+      $('loading').style.display = 'none';
+      $('auth-screen').style.display = 'flex';
+      $('auth-message').innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access. <a href="#" onclick="supabase.auth.signOut();return false;" style="color:inherit;text-decoration:underline">Sign out</a> and try a different email.</div>`;
+      return;
+    }
+    currentUser = user;
+    currentPlayer = PLAYERS[email];
+    partnerPlayer = PLAYERS[currentPlayer.partner_email];
+
+    await ensurePlayerRow();
+    await loadProgress();
+
+    $('loading').style.display = 'none';
+    $('auth-screen').style.display = 'none';
+    $('app').style.display = 'block';
+    $('current-player-name').textContent = currentPlayer.name;
+    $('partner-name').textContent = `${partnerPlayer.name}'s`;
+
+    renderBoard();
+    renderStats();
+    renderMiniGrid();
+    previousBingoCount = getBingoCount(myProgress.completed);
+  }
+
+  async function ensurePlayerRow() {
+    const { data: existing } = await supabase
+      .from('bingo_players').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (!existing) {
+      await supabase.from('bingo_players').insert({
+        user_id: currentUser.id,
+        display_name: currentPlayer.name,
+        email: currentUser.email.toLowerCase()
+      });
+    }
+    const { data: progressRow } = await supabase
+      .from('bingo_progress').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (!progressRow) {
+      await supabase.from('bingo_progress').insert({
+        user_id: currentUser.id,
+        completed_squares: [],
+        square_notes: {}
+      });
+    }
+  }
+
+  async function loadProgress() {
+    const { data: mine } = await supabase
+      .from('bingo_progress')
+      .select('completed_squares, square_notes')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+    if (mine) {
+      myProgress.completed = mine.completed_squares || [];
+      myProgress.notes = mine.square_notes || {};
+    }
+    const { data: partnerRow } = await supabase
+      .from('bingo_players')
+      .select('user_id')
+      .eq('email', currentPlayer.partner_email)
+      .maybeSingle();
+    if (partnerRow) {
+      const { data: partnerData } = await supabase
+        .from('bingo_progress')
+        .select('completed_squares, square_notes')
+        .eq('user_id', partnerRow.user_id)
+        .maybeSingle();
+      if (partnerData) {
+        partnerProgress.completed = partnerData.completed_squares || [];
+        partnerProgress.notes = partnerData.square_notes || {};
+      }
+    }
+  }
+
+  async function saveProgress() {
+    await supabase
+      .from('bingo_progress')
+      .update({
+        completed_squares: myProgress.completed,
+        square_notes: myProgress.notes,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', currentUser.id);
+  }
+
+  function renderBoard() {
+    const board = $('board');
+    const progress = activeView === 'mine' ? myProgress : partnerProgress;
+    board.className = activeView === 'partner' ? 'board readonly' : 'board';
+    const bingoCells = getBingoCells(progress.completed);
+    $('board-label').innerHTML = activeView === 'mine'
+      ? `<strong>${currentPlayer.name}'s</strong> card`
+      : `<strong>${partnerPlayer.name}'s</strong> card`;
+    board.innerHTML = '';
+    TASKS.forEach((task, i) => {
+      const isDone = progress.completed.includes(i);
+      const hasNote = progress.notes[i] && progress.notes[i].trim().length > 0;
+      const isBingo = bingoCells.has(i);
+      const cell = document.createElement('button');
+      cell.className = `cell ${isDone ? 'done' : ''} ${isBingo ? 'bingo-line' : ''}`;
+      cell.innerHTML = `
+        <div class="cell-num">${String(i + 1).padStart(2, '0')}</div>
+        <div class="cell-text">${task}</div>
+        <div class="cell-meta">
+          <span class="cell-num">${isDone ? 'DONE' : ''}</span>
+          ${hasNote ? '<span class="note-indicator">✎</span>' : ''}
+        </div>
+      `;
+      cell.addEventListener('click', () => openSquare(i));
+      board.appendChild(cell);
+    });
+  }
+
+  function renderStats() {
+    const completed = myProgress.completed.length;
+    const bingos = getBingoCount(myProgress.completed);
+    const pct = Math.round((completed / 16) * 100);
+    $('stat-completed').textContent = completed;
+    $('stat-bingos').textContent = bingos;
+    $('stat-progress').textContent = pct + '%';
+  }
+
+  function renderMiniGrid() {
+    const mini = $('mini-grid');
+    const bingoCells = getBingoCells(partnerProgress.completed);
+    mini.innerHTML = '';
+    for (let i = 0; i < 16; i++) {
+      const div = document.createElement('div');
+      const isDone = partnerProgress.completed.includes(i);
+      const isBingo = bingoCells.has(i);
+      div.className = `mini-cell ${isDone ? 'done' : ''} ${isBingo ? 'bingo-line' : ''}`;
+      mini.appendChild(div);
+    }
+    const completed = partnerProgress.completed.length;
+    const bingos = getBingoCount(partnerProgress.completed);
+    $('partner-stats').textContent = `${completed}/16 · ${bingos} bingo${bingos === 1 ? '' : 's'}`;
+  }
+
+  function openSquare(i) {
+    activeSquare = i;
+    const isMine = activeView === 'mine';
+    const progress = isMine ? myProgress : partnerProgress;
+    const isDone = progress.completed.includes(i);
+    const note = progress.notes[i] || '';
+    const ownerName = isMine ? currentPlayer.name : partnerPlayer.name;
+
+    $('modal-eyebrow').textContent = `Square ${String(i + 1).padStart(2, '0')}${isDone ? ' · Completed' : ''}`;
+    $('modal-title').textContent = TASKS[i];
+    $('modal-note').value = note;
+    $('modal-note').readOnly = !isMine;
+    $('modal-note-label').textContent = isMine
+      ? "Your reflection — what happened? what'd you learn?"
+      : `${ownerName}'s reflection`;
+
+    const actions = $('modal-actions');
+    actions.innerHTML = '';
+    if (isMine) {
+      if (isDone) {
+        const undo = document.createElement('button');
+        undo.className = 'btn btn-danger';
+        undo.textContent = 'Mark Undone';
+        undo.onclick = () => toggleSquare(i, false);
+        actions.appendChild(undo);
+        const save = document.createElement('button');
+        save.className = 'btn btn-primary';
+        save.textContent = 'Save Note';
+        save.onclick = saveNote;
+        actions.appendChild(save);
+      } else {
+        const cancel = document.createElement('button');
+        cancel.className = 'btn btn-secondary';
+        cancel.textContent = 'Cancel';
+        cancel.onclick = closeModal;
+        actions.appendChild(cancel);
+        const done = document.createElement('button');
+        done.className = 'btn btn-primary';
+        done.textContent = 'Mark Done';
+        done.onclick = () => toggleSquare(i, true);
+        actions.appendChild(done);
+      }
+    } else {
+      const close = document.createElement('button');
+      close.className = 'btn btn-secondary';
+      close.textContent = 'Close';
+      close.onclick = closeModal;
+      actions.appendChild(close);
+    }
+    $('modal-backdrop').style.display = 'flex';
+  }
+
+  function closeModal() {
+    $('modal-backdrop').style.display = 'none';
+    activeSquare = null;
+  }
+
+  async function toggleSquare(i, markDone) {
+    const note = $('modal-note').value.trim();
+    if (markDone) {
+      if (!myProgress.completed.includes(i)) myProgress.completed = [...myProgress.completed, i];
+    } else {
+      myProgress.completed = myProgress.completed.filter(x => x !== i);
+    }
+    if (note) {
+      myProgress.notes = { ...myProgress.notes, [i]: note };
+    } else if (myProgress.notes[i]) {
+      const newNotes = { ...myProgress.notes };
+      delete newNotes[i];
+      myProgress.notes = newNotes;
+    }
+    closeModal();
+    renderBoard();
+    renderStats();
+    await saveProgress();
+    const newBingoCount = getBingoCount(myProgress.completed);
+    if (newBingoCount > previousBingoCount && markDone) celebrate(newBingoCount);
+    previousBingoCount = newBingoCount;
+    if (myProgress.completed.length === 16 && markDone) {
+      setTimeout(() => celebrate('BLACKOUT'), 1800);
+    }
+  }
+
+  async function saveNote() {
+    const note = $('modal-note').value.trim();
+    if (note) {
+      myProgress.notes = { ...myProgress.notes, [activeSquare]: note };
+    } else if (myProgress.notes[activeSquare]) {
+      const newNotes = { ...myProgress.notes };
+      delete newNotes[activeSquare];
+      myProgress.notes = newNotes;
+    }
+    closeModal();
+    renderBoard();
+    await saveProgress();
+  }
+
+  function celebrate(bingoCount) {
+    const el = document.createElement('div');
+    el.className = 'celebration';
+    const text = bingoCount === 'BLACKOUT' ? 'Blackout!' : (bingoCount === 1 ? 'Bingo!' : `Bingo ×${bingoCount}!`);
+    el.innerHTML = `<div class="celebration-text">${text}</div>`;
+    document.body.appendChild(el);
+    const colors = ['#c4521d', '#d4a017', '#5a6438', '#1a1410', '#8a3812'];
+    for (let i = 0; i < 60; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.top = -20 + 'px';
+      c.style.animationDelay = (Math.random() * 0.4) + 's';
+      c.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+      c.style.transform = `rotate(${Math.random() * 360}deg)`;
+      el.appendChild(c);
+    }
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  $('send-link-btn').addEventListener('click', async () => {
+    const email = $('email-input').value.trim().toLowerCase();
+    const msg = $('auth-message');
+    msg.innerHTML = '';
+    if (!email) {
+      msg.innerHTML = `<div class="auth-error">Add your email first.</div>`;
+      return;
+    }
+    if (!PLAYERS[email]) {
+      msg.innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access.</div>`;
+      return;
+    }
+    $('send-link-btn').disabled = true;
+    $('send-link-btn').textContent = 'Sending…';
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.href }
+    });
+    $('send-link-btn').disabled = false;
+    $('send-link-btn').textContent = 'Send Magic Link';
+    if (error) {
+      msg.innerHTML = `<div class="auth-error">${error.message}</div>`;
+    } else {
+      msg.innerHTML = `<div class="auth-success">Check your inbox at <strong>${email}</strong> for a sign-in link. Click it on this device.</div>`;
+    }
+  });
+
+  $('email-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('send-link-btn').click();
+  });
+
+  $('signout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+  });
+
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeView = btn.dataset.view;
+      if (activeView === 'partner') {
+        await loadProgress();
+        renderMiniGrid();
+      }
+      renderBoard();
+    });
+  });
+
+  $('modal-close').addEventListener('click', closeModal);
+  $('modal-backdrop').addEventListener('click', (e) => {
+    if (e.target === $('modal-backdrop')) closeModal();
+  });
+
+  setInterval(async () => {
+    if (currentUser) {
+      await loadProgress();
+      if (activeView === 'partner') renderBoard();
+      renderMiniGrid();
+    }
+  }, 30000);
+
+  init();
+</script>
+</body>
+</html>
