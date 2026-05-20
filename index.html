@@ -741,7 +741,7 @@
     "Record and post another short video answering a client question"
   ];
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = null;
   let currentPlayer = null;
@@ -774,7 +774,7 @@
   async function init() {
     try {
       const { data: { session }, error } = await Promise.race([
-        supabase.auth.getSession(),
+        sb.auth.getSession(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase took too long to respond. Check that your Supabase URL and anon key are correct, and that the Vercel URL is added to Supabase Authentication > URL Configuration.')), 8000))
       ]);
       if (error) throw error;
@@ -789,7 +789,7 @@
       $('auth-screen').style.display = 'flex';
       $('auth-message').innerHTML = `<div class="auth-error"><strong>Setup issue:</strong> ${err.message || err}</div>`;
     }
-    supabase.auth.onAuthStateChange((event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) handleSignedIn(session.user);
       else if (event === 'SIGNED_OUT') location.reload();
     });
@@ -805,7 +805,7 @@
     if (!PLAYERS[email]) {
       $('loading').style.display = 'none';
       $('auth-screen').style.display = 'flex';
-      $('auth-message').innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access. <a href="#" onclick="supabase.auth.signOut();return false;" style="color:inherit;text-decoration:underline">Sign out</a> and try a different email.</div>`;
+      $('auth-message').innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access. <a href="#" onclick="sb.auth.signOut();return false;" style="color:inherit;text-decoration:underline">Sign out</a> and try a different email.</div>`;
       return;
     }
     currentUser = user;
@@ -828,19 +828,19 @@
   }
 
   async function ensurePlayerRow() {
-    const { data: existing } = await supabase
+    const { data: existing } = await sb
       .from('bingo_players').select('*').eq('user_id', currentUser.id).maybeSingle();
     if (!existing) {
-      await supabase.from('bingo_players').insert({
+      await sb.from('bingo_players').insert({
         user_id: currentUser.id,
         display_name: currentPlayer.name,
         email: currentUser.email.toLowerCase()
       });
     }
-    const { data: progressRow } = await supabase
+    const { data: progressRow } = await sb
       .from('bingo_progress').select('*').eq('user_id', currentUser.id).maybeSingle();
     if (!progressRow) {
-      await supabase.from('bingo_progress').insert({
+      await sb.from('bingo_progress').insert({
         user_id: currentUser.id,
         completed_squares: [],
         square_notes: {}
@@ -849,7 +849,7 @@
   }
 
   async function loadProgress() {
-    const { data: mine } = await supabase
+    const { data: mine } = await sb
       .from('bingo_progress')
       .select('completed_squares, square_notes')
       .eq('user_id', currentUser.id)
@@ -858,13 +858,13 @@
       myProgress.completed = mine.completed_squares || [];
       myProgress.notes = mine.square_notes || {};
     }
-    const { data: partnerRow } = await supabase
+    const { data: partnerRow } = await sb
       .from('bingo_players')
       .select('user_id')
       .eq('email', currentPlayer.partner_email)
       .maybeSingle();
     if (partnerRow) {
-      const { data: partnerData } = await supabase
+      const { data: partnerData } = await sb
         .from('bingo_progress')
         .select('completed_squares, square_notes')
         .eq('user_id', partnerRow.user_id)
@@ -877,7 +877,7 @@
   }
 
   async function saveProgress() {
-    await supabase
+    await sb
       .from('bingo_progress')
       .update({
         completed_squares: myProgress.completed,
@@ -1072,7 +1072,7 @@
     }
     $('send-link-btn').disabled = true;
     $('send-link-btn').textContent = 'Sending…';
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await sb.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: window.location.href }
     });
@@ -1090,7 +1090,7 @@
   });
 
   $('signout-btn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
   });
 
   document.querySelectorAll('.view-btn').forEach(btn => {
