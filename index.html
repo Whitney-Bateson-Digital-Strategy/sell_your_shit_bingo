@@ -613,13 +613,86 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ===== ADMIN VIEW ===== */
+  .admin-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 32px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .admin-player-block {
+    background: var(--paper-warm);
+    border: 1px solid rgba(26, 20, 16, 0.1);
+    border-radius: 6px;
+    padding: 20px 18px;
+    text-align: center;
+  }
+  .admin-player-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-style: italic;
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: var(--ink);
+    font-variation-settings: "opsz" 144;
+  }
+  .admin-stat-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 4px 0;
+  }
+  .admin-stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--ink);
+  }
+  .admin-stat-label { opacity: 0.6; }
+  .admin-boards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .admin-board-col { min-width: 0; }
+  .admin-board {
+    gap: 6px;
+  }
+  .admin-board .cell {
+    padding: 8px 6px;
+  }
+  .admin-board .cell-text {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .admin-board .cell-num { font-size: 8px; }
+  .admin-board .cell.done::after {
+    width: 16px;
+    height: 16px;
+    top: 6px;
+    right: 6px;
+    background-size: 8px 8px;
+  }
+
+  @media (max-width: 900px) {
+    .admin-boards { grid-template-columns: 1fr; gap: 32px; }
+    .admin-board .cell-text { font-size: 12px; }
+    .admin-board .cell { padding: 12px 10px; }
+  }
+
   @media (max-width: 640px) {
     .wrap { padding: 24px 16px 60px; }
     .cell { padding: 10px 8px; }
     .cell-text { font-size: 11px; }
     .stat-num { font-size: 30px; }
     .top-bar { flex-direction: column; gap: 12px; align-items: center; }
+    .admin-stats-row { grid-template-columns: 1fr; }
   }
+
 </style>
 </head>
 <body>
@@ -638,7 +711,7 @@
       <label class="field-label" for="email-input">Your Email</label>
       <input type="email" id="email-input" class="field-input" placeholder="you@yourdomain.com" autocomplete="email" />
       <button id="send-link-btn" class="btn btn-primary" style="margin-top: 16px; width: 100%;">Send Magic Link</button>
-      <p class="auth-note">A sign-in link will land in your inbox. Only Whitney and Orly have access to this card.</p>
+      <p class="auth-note">A sign-in link will land in your inbox. Access restricted to Whitney, Orly, and the admin.</p>
       <div id="auth-message"></div>
     </div>
   </div>
@@ -688,6 +761,51 @@
   </div>
 </div>
 
+<div id="admin-app" class="wrap" style="display:none">
+  <div class="top-bar">
+    <div class="me">Admin view — signed in as <strong id="admin-name"></strong></div>
+    <button id="admin-signout-btn" class="signout">Sign Out</button>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">Admin Dashboard</div>
+    <h1 class="title">Sell Your <span class="accent">Sh!t</span></h1>
+    <p class="subtitle">Read-only view of both players' progress. Click any completed square to read their reflection notes.</p>
+  </div>
+
+  <div class="admin-stats-row">
+    <div class="admin-player-block" id="admin-block-1">
+      <div class="admin-player-name" id="admin-name-1">Player 1</div>
+      <div class="admin-stat-line">
+        <span class="admin-stat-num" id="admin-completed-1">0</span><span class="admin-stat-label"> / 16 done</span>
+      </div>
+      <div class="admin-stat-line">
+        <span class="admin-stat-num" id="admin-bingos-1">0</span><span class="admin-stat-label"> bingo<span id="admin-bingos-s-1"></span></span>
+      </div>
+    </div>
+    <div class="admin-player-block" id="admin-block-2">
+      <div class="admin-player-name" id="admin-name-2">Player 2</div>
+      <div class="admin-stat-line">
+        <span class="admin-stat-num" id="admin-completed-2">0</span><span class="admin-stat-label"> / 16 done</span>
+      </div>
+      <div class="admin-stat-line">
+        <span class="admin-stat-num" id="admin-bingos-2">0</span><span class="admin-stat-label"> bingo<span id="admin-bingos-s-2"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-boards">
+    <div class="admin-board-col">
+      <div class="board-label"><strong id="admin-board-label-1">Player 1</strong>'s card</div>
+      <div id="admin-board-1" class="board readonly admin-board"></div>
+    </div>
+    <div class="admin-board-col">
+      <div class="board-label"><strong id="admin-board-label-2">Player 2</strong>'s card</div>
+      <div id="admin-board-2" class="board readonly admin-board"></div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-backdrop" class="modal-backdrop" style="display:none">
   <div class="modal">
     <button class="modal-close" id="modal-close">&times;</button>
@@ -718,8 +836,9 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndXFlZndobHplaHB6Z2xqYmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzYyMjYsImV4cCI6MjA4OTk1MjIyNn0.N8-BWjyTFMpdoTbKBik8jQdyA7YCPiq7nT_HdfxcMZ8';
 
   const PLAYERS = {
-    'whitney@whitneybateson.com': { name: 'Whitney', partner_email: 'orly@orlywachter.com' },
-    'orly@orlywachter.com':        { name: 'Orly',    partner_email: 'whitney@whitneybateson.com' }
+    'whitney@whitneybateson.com': { name: 'Whitney', partner_email: 'orly@orlywachter.com', role: 'player' },
+    'orly@orlywachter.com':        { name: 'Orly',    partner_email: 'whitney@whitneybateson.com', role: 'player' },
+    'admin@whitneybateson.com':    { name: 'Cilla',   role: 'admin' }
   };
 
   const TASKS = [
@@ -805,11 +924,22 @@
     if (!PLAYERS[email]) {
       $('loading').style.display = 'none';
       $('auth-screen').style.display = 'flex';
-      $('auth-message').innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access. <a href="#" onclick="sb.auth.signOut();return false;" style="color:inherit;text-decoration:underline">Sign out</a> and try a different email.</div>`;
+      $('auth-message').innerHTML = `<div class="auth-error">This card is private. Access restricted to Whitney, Orly, and the admin. <a href="#" onclick="sb.auth.signOut();return false;" style="color:inherit;text-decoration:underline">Sign out</a> and try a different email.</div>`;
       return;
     }
     currentUser = user;
     currentPlayer = PLAYERS[email];
+
+    if (currentPlayer.role === 'admin') {
+      await loadAdminData();
+      $('loading').style.display = 'none';
+      $('auth-screen').style.display = 'none';
+      $('admin-app').style.display = 'block';
+      $('admin-name').textContent = currentPlayer.name;
+      renderAdminView();
+      return;
+    }
+
     partnerPlayer = PLAYERS[currentPlayer.partner_email];
 
     await ensurePlayerRow();
@@ -825,6 +955,84 @@
     renderStats();
     renderMiniGrid();
     previousBingoCount = getBingoCount(myProgress.completed);
+  }
+
+  // ===== ADMIN VIEW =====
+  let adminPlayerData = []; // [{email, name, completed, notes}, ...]
+
+  async function loadAdminData() {
+    const playerEmails = Object.keys(PLAYERS).filter(e => PLAYERS[e].role === 'player');
+    adminPlayerData = [];
+    for (const email of playerEmails) {
+      const playerInfo = PLAYERS[email];
+      const { data: playerRow } = await sb
+        .from('bingo_players')
+        .select('user_id')
+        .eq('email', email)
+        .maybeSingle();
+      let completed = [], notes = {};
+      if (playerRow) {
+        const { data: progressRow } = await sb
+          .from('bingo_progress')
+          .select('completed_squares, square_notes')
+          .eq('user_id', playerRow.user_id)
+          .maybeSingle();
+        if (progressRow) {
+          completed = progressRow.completed_squares || [];
+          notes = progressRow.square_notes || {};
+        }
+      }
+      adminPlayerData.push({ email, name: playerInfo.name, completed, notes });
+    }
+  }
+
+  function renderAdminView() {
+    adminPlayerData.forEach((player, idx) => {
+      const n = idx + 1;
+      $(`admin-name-${n}`).textContent = player.name;
+      $(`admin-board-label-${n}`).textContent = player.name;
+      $(`admin-completed-${n}`).textContent = player.completed.length;
+      const bingos = getBingoCount(player.completed);
+      $(`admin-bingos-${n}`).textContent = bingos;
+      $(`admin-bingos-s-${n}`).textContent = bingos === 1 ? '' : 's';
+
+      const board = $(`admin-board-${n}`);
+      const bingoCells = getBingoCells(player.completed);
+      board.innerHTML = '';
+      TASKS.forEach((task, i) => {
+        const isDone = player.completed.includes(i);
+        const note = player.notes[i] && player.notes[i].trim().length > 0 ? player.notes[i] : null;
+        const isBingo = bingoCells.has(i);
+        const cell = document.createElement('button');
+        cell.className = `cell ${isDone ? 'done' : ''} ${isBingo ? 'bingo-line' : ''}`;
+        cell.innerHTML = `
+          <div class="cell-num">${String(i + 1).padStart(2, '0')}</div>
+          <div class="cell-text">${task}</div>
+          <div class="cell-meta">
+            <span class="cell-num">${isDone ? 'DONE' : ''}</span>
+            ${note ? '<span class="note-indicator">✎</span>' : ''}
+          </div>
+        `;
+        cell.addEventListener('click', () => openAdminSquare(player.name, i, isDone, note));
+        board.appendChild(cell);
+      });
+    });
+  }
+
+  function openAdminSquare(playerName, i, isDone, note) {
+    $('modal-eyebrow').textContent = `${playerName} · Square ${String(i + 1).padStart(2, '0')}${isDone ? ' · Completed' : ''}`;
+    $('modal-title').textContent = TASKS[i];
+    $('modal-note').value = note || '(no reflection note)';
+    $('modal-note').readOnly = true;
+    $('modal-note-label').textContent = `${playerName}'s reflection`;
+    const actions = $('modal-actions');
+    actions.innerHTML = '';
+    const close = document.createElement('button');
+    close.className = 'btn btn-secondary';
+    close.textContent = 'Close';
+    close.onclick = closeModal;
+    actions.appendChild(close);
+    $('modal-backdrop').style.display = 'flex';
   }
 
   async function ensurePlayerRow() {
@@ -1067,7 +1275,7 @@
       return;
     }
     if (!PLAYERS[email]) {
-      msg.innerHTML = `<div class="auth-error">This card is private. Only Whitney and Orly have access.</div>`;
+      msg.innerHTML = `<div class="auth-error">This card is private. Access restricted to Whitney, Orly, and the admin.</div>`;
       return;
     }
     $('send-link-btn').disabled = true;
@@ -1093,6 +1301,10 @@
     await sb.auth.signOut();
   });
 
+  $('admin-signout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+  });
+
   document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
@@ -1112,7 +1324,11 @@
   });
 
   setInterval(async () => {
-    if (currentUser) {
+    if (!currentUser) return;
+    if (currentPlayer && currentPlayer.role === 'admin') {
+      await loadAdminData();
+      renderAdminView();
+    } else {
       await loadProgress();
       if (activeView === 'partner') renderBoard();
       renderMiniGrid();
