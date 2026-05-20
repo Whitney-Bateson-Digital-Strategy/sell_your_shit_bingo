@@ -758,11 +758,22 @@
   }
 
   async function init() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && session.user) {
-      handleSignedIn(session.user);
-    } else {
-      showAuth();
+    try {
+      const { data: { session }, error } = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase took too long to respond. Check that your Supabase URL and anon key are correct, and that the Vercel URL is added to Supabase Authentication > URL Configuration.')), 8000))
+      ]);
+      if (error) throw error;
+      if (session && session.user) {
+        handleSignedIn(session.user);
+      } else {
+        showAuth();
+      }
+    } catch (err) {
+      console.error('Init error:', err);
+      $('loading').style.display = 'none';
+      $('auth-screen').style.display = 'flex';
+      $('auth-message').innerHTML = `<div class="auth-error"><strong>Setup issue:</strong> ${err.message || err}</div>`;
     }
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) handleSignedIn(session.user);
