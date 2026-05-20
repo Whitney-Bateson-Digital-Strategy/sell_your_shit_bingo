@@ -350,23 +350,6 @@
     letter-spacing: 0.1em;
     opacity: 0.35;
   }
-  .cell-icon {
-    width: 24px;
-    height: 24px;
-    color: var(--ink);
-    opacity: 0.65;
-    flex-shrink: 0;
-  }
-  .cell-icon svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-    stroke: currentColor;
-  }
-  .cell.done .cell-icon {
-    color: var(--paper);
-    opacity: 0.85;
-  }
   .cell:hover {
     background: var(--paper-deep);
     transform: translateY(-2px);
@@ -374,8 +357,8 @@
   }
   .cell-text {
     font-family: 'Fraunces', serif;
-    font-size: 10.5px;
-    line-height: 1.2;
+    font-size: 12px;
+    line-height: 1.25;
     font-weight: 600;
     text-align: center;
     width: 100%;
@@ -446,15 +429,9 @@
     color: var(--paper);
     font-style: italic;
     font-weight: 800;
-    font-size: 22px;
+    font-size: 32px;
     letter-spacing: 0.05em;
     font-variation-settings: "opsz" 144;
-  }
-  .cell.free .cell-icon {
-    width: 30px;
-    height: 30px;
-    color: var(--paper);
-    opacity: 1;
   }
   .cell.free .cell-num { color: var(--paper); opacity: 0.4; }
   .cell.free::after { display: none; }
@@ -731,48 +708,20 @@
   }
   .admin-stat-label { opacity: 0.6; }
   .admin-boards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
   }
   .admin-board-col { min-width: 0; }
   .admin-bingo-header .bingo-letter {
-    font-size: clamp(20px, 2.5vw, 32px);
-    border-bottom-width: 2px;
-    padding: 4px 0;
-  }
-  .admin-board {
-    gap: 6px;
-  }
-  .admin-board .cell {
-    padding: 8px 6px;
-  }
-  .admin-board .cell-text {
-    font-size: 10px;
-    line-height: 1.2;
-  }
-  .admin-board .cell-num { font-size: 8px; }
-  .admin-board .cell.done::after {
-    width: 16px;
-    height: 16px;
-    top: 6px;
-    right: 6px;
-    background-size: 8px 8px;
-  }
-
-  @media (max-width: 900px) {
-    .admin-boards { grid-template-columns: 1fr; gap: 32px; }
-    .admin-board .cell-text { font-size: 12px; }
-    .admin-board .cell { padding: 12px 10px; }
+    font-size: clamp(28px, 4vw, 44px);
   }
 
   @media (max-width: 640px) {
     .wrap { padding: 24px 16px 60px; }
-    .cell { padding: 6px 4px; gap: 4px; }
-    .cell-text { font-size: 8.5px; line-height: 1.15; }
-    .cell-icon { width: 18px; height: 18px; }
-    .cell.free .cell-text { font-size: 15px; }
-    .cell.free .cell-icon { width: 22px; height: 22px; }
+    .cell { padding: 6px 4px; }
+    .cell-text { font-size: 9.5px; line-height: 1.18; }
+    .cell.free .cell-text { font-size: 20px; }
     .cell-num { font-size: 7px; top: 4px; left: 5px; }
     .stat-num { font-size: 30px; }
     .top-bar { flex-direction: column; gap: 12px; align-items: center; }
@@ -1161,7 +1110,6 @@
         cell.className = `cell ${isDone ? 'done' : ''} ${isBingo ? 'bingo-line' : ''} ${isFree ? 'free' : ''}`;
         cell.innerHTML = `
           <div class="cell-num">${String(i + 1).padStart(2, '0')}</div>
-          <div class="cell-icon">${ICONS[task.icon] || ''}</div>
           <div class="cell-text">${task.text}</div>
           ${note ? '<span class="note-indicator">✎</span>' : ''}
         `;
@@ -1267,7 +1215,6 @@
       cell.className = `cell ${isDone ? 'done' : ''} ${isBingo ? 'bingo-line' : ''} ${isFree ? 'free' : ''}`;
       cell.innerHTML = `
         <div class="cell-num">${String(i + 1).padStart(2, '0')}</div>
-        <div class="cell-icon">${ICONS[task.icon] || ''}</div>
         <div class="cell-text">${task.text}</div>
         ${hasNote ? '<span class="note-indicator">✎</span>' : ''}
       `;
