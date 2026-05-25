@@ -619,9 +619,9 @@
     font-style: italic;
     font-weight: 800;
     font-size: clamp(80px, 14vw, 180px);
-    color: var(--ink);
+    color: #ff3da6;
     animation: celebrate 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 8px 40px rgba(255, 61, 166, 0.4);
     font-variation-settings: "opsz" 144;
   }
   @keyframes celebrate {
@@ -1358,7 +1358,7 @@
     const text = bingoCount === 'BLACKOUT' ? 'Blackout!' : (bingoCount === 1 ? 'Bingo!' : `Bingo ×${bingoCount}!`);
     el.innerHTML = `<div class="celebration-text">${text}</div>`;
     document.body.appendChild(el);
-    const colors = ['#000000', '#222222', '#555555', '#888888', '#cccccc'];
+    const colors = ['#ff3da6', '#ff6b35', '#ffe033', '#4ade80', '#38bdf8', '#a78bfa', '#fb923c', '#f472b6'];
     for (let i = 0; i < 60; i++) {
       const c = document.createElement('div');
       c.className = 'confetti';
